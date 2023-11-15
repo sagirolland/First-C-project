@@ -1,4 +1,6 @@
-#Hello There,
+# Snakes and Ladders
+## My first project on GitHub
+Hello There,
 This is my first shared C project.
 This is a game of snakes and ladders 
 in which the player choose the size of the board
