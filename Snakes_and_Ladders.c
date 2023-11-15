@@ -3,85 +3,20 @@
 #include <stdbool.h>
 #include <time.h>
 
-void endGame(int *player1plc, int *player2plc, int *row, int *coll, int *length);
+void endGame(int playerplc[2], int *length);
 int toss();
-void boardPrint(int **board, int *row, int *coll, int *player1plc, int *player2plc, int ladd[6], int snk[6], int *length);
+void boardPrint(int **board, int *row, int *coll, int playerplc[2], int ladd[6], int snk[6], int *length);
 void boardInit(int **board, int *row, int *coll, int ladder[6], int snake[6], int *length);
-int gamePlay(int **board, int *player1plc, int *player2plc, int ladd[6], int snk[6], int *row, int *coll, int choice, int *length);
+int gamePlay(int **board, int playerplc[2], int player, int ladd[6], int snk[6], int *row, int *coll, int choice, int *length);
 
-int toss()
-{
-    int toss = 0;
-    while (toss == 0)
-    {
-        toss = rand() % 7;
-    }
-    return toss;
-}
-
-void boardPrint(int **board, int *row, int *coll, int *player1plc, int *player2plc, int ladd[6], int snk[6], int *length)
-{
-    int count = 0, mark = 0;
-    for (int i = 0; i < *row; i++)
-    {
-        for (int j = 0; j < *coll; j++)
-        {
-            mark = 0;
-            if (count == *player1plc) 
-            {
-                printf("%d_PL1", count);
-                mark = 1;
-            }
-            else if (count == *player2plc && mark == 0) 
-            {
-                printf("%d_PL2_", count);
-                mark = 1;
-            }
-            if (mark == 0) 
-            {
-
-                for (int h = 0; h < 6; h++)
-                {
-                    if (ladd[h] == count && h % 2 == 0)
-                    {
-                        printf(" %d_laddSt_", count);
-                        mark = 1;
-                    }
-                    else if (ladd[h] == count && h % 2 == 1)
-                    {
-                        printf(" %d_laddEnd_", count);
-                        mark = 1;
-                    }
-                    if (snk[h] == count && h % 2 == 0)
-                    {
-                        printf(" %d_snkEnd_", count);
-                        mark = 1;
-                    }
-                    if (snk[h] == count && h % 2 == 1)
-                    {
-                        printf(" %d_snkSt_", count);
-                        mark = 1;
-                    }
-                }
-            }
-            if (mark == 0) 
-            {
-                printf(" %d___", count);
-            }
-            count++;
-        }
-        printf("\n");
-    }
-}
-
-void boardInit(int **board, int *row, int *coll, int ladder[6], int snake[6], int *length)
+void boardInit(int **board, int *row, int *coll, int ladder[6], int snake[6], int *length)//initiating the board, snakes and ladders
 {
     printf("enter board size:\n");
     printf("row: \n");
     scanf("%d", row);
     printf("coll: \n");
     scanf("%d", coll);
-    *length=(int)(*row**coll);
+    *length = (int)(*row * *coll);
     board = (int **)malloc(*length * sizeof(int *));
     printf("place the start and end of your ladders:\n");
     printf("example: 6, 20 means you go from sqwer 6 to 20\n");
@@ -104,139 +39,141 @@ void boardInit(int **board, int *row, int *coll, int ladder[6], int snake[6], in
     return;
 }
 
-int gamePlay(int **board, int *player1plc, int *player2plc, int ladd[6], int snk[6], int *row, int *coll, int choice, int *length)
+void boardPrint(int **board, int *row, int *coll, int playerplc[2], int ladd[6], int snk[6], int *length)//printing the board and the locations of the players snakes and ladders
+{
+    int count = 0, mark = 0;
+    for (int i = 0; i < *row; i++)
+    {
+        for (int j = 0; j < *coll; j++)
+        {
+            mark = 0;
+            if (count == playerplc[0])
+            {
+                printf("%d_PL1_", count);
+                mark = 1;
+            }
+            else if (count == playerplc[1])
+            {
+                printf("%d_PL2_", count);
+                mark = 1;
+            }
+            if (mark == 0)
+            {
+
+                for (int h = 0; h < 6 ; h = h + 2)
+                {
+                    if (ladd[h] == count)
+                    {
+                        printf(" %d_laddSt_", count);
+                        mark = 1;
+                        break;
+                    }
+                    if (ladd[h + 1] == count)
+                    {
+                        printf(" %d_laddEnd_", count);
+                        mark = 1;
+                        break;
+                    }
+                    if (snk[h] == count)
+                    {
+                        printf(" %d_snkSt_", count);
+                        mark = 1;
+                        break;
+                    }
+                    if (snk[h + 1] == count)
+                    {
+                        printf(" %d_snkEnd_", count);
+                        mark = 1;
+                        break;
+                    }
+                }
+            }
+            if (mark == 0)
+            {
+                printf(" %d___", count);
+            }
+            count++;
+        }
+        printf("\n");
+    }
+}
+
+int toss() // rolling the dice
+{
+    int toss = 0;
+    while (toss == 0)
+    {
+        toss = rand() % 7;
+    }
+    return toss;
+}
+
+int gamePlay(int **board, int playerplc[2], int player, int ladd[6], int snk[6], int *row, int *coll, int choice, int *length)//tossing the cube and moving the pieces checking if landed on snake or ladder and moving according to it. checking for end of game. printing corrent board 
 {
     int cubeval;
-    switch (choice)
+    cubeval = toss();
+    printf("\nplayer %d you tossed: %d\n", choice, cubeval);
+    playerplc[player] += cubeval;
+    for (int i = 0; i < 6; i = 2 + i)
     {
-    case 1: // player 1 turn
-    
-        cubeval = toss();
-        printf("\nplayer 1 you tossed: %d\n", cubeval);
-        *player1plc += cubeval;
-        if (*player1plc == ladd[0])
+        if (playerplc[player] == ladd[i])
         {
-            *player1plc = ladd[1];
+            playerplc[player] = ladd[i + 1];
         }
-        if (*player1plc == ladd[2])
+        else if (playerplc[player] == snk[i])
         {
-            *player1plc = ladd[3];
+            playerplc[player] = snk[i + 1];
         }
-        if (*player1plc == ladd[4])
-        {
-            *player1plc = ladd[5];
-        }
-        if (*player1plc == snk[0])
-        {
-            *player1plc = snk[1];
-        }
-        if (*player1plc == snk[2])
-        {
-            *player1plc = snk[3];
-        }
-        if (*player1plc == snk[4])
-        {
-            *player1plc = snk[5];
-        }
-
-        if (*player1plc >= *length-1)
-        {
-            *player1plc = *length - 1;
-            boardPrint(board, row, coll, player1plc, player2plc, ladd, snk, length);
-            endGame(player1plc, player2plc, row, coll, length);
-            return 0;
-        }
-        boardPrint(board, row, coll, player1plc, player2plc, ladd, snk, length);
-        break;
-
-    case 2: // player 2 turn
-        cubeval = toss();
-        printf("\nplayer 2 you tossed: %d\n", cubeval);
-        *player2plc += cubeval;
-        if (*player2plc == ladd[0])
-        {
-            *player2plc = ladd[1];
-        }
-        if (*player2plc == ladd[2])
-        {
-            *player2plc = ladd[3];
-        }
-        if (*player2plc == ladd[4])
-        {
-            *player2plc = ladd[5];
-        }
-        if (*player2plc == snk[0])
-        {
-            *player2plc = snk[1];
-        }
-        if (*player2plc == snk[2])
-        {
-            *player2plc = snk[3];
-        }
-        if (*player2plc == snk[4])
-        {
-            *player2plc = snk[5];
-        }
-
-        if (*player2plc >= *length-1)
-        {
-            *player2plc = *length - 1;
-            boardPrint(board, row, coll, player1plc, player2plc, ladd, snk, length);
-            endGame(player1plc, player2plc, row, coll, length);
-            return 0;
-        }
-        boardPrint(board, row, coll, player1plc, player2plc, ladd, snk, length);
-        break;
-
-    case 3: // exit game
-        boardPrint(board, row, coll, player1plc, player2plc, ladd, snk, length);
-        endGame(player1plc, player2plc, row, coll, length);
+    }
+    if (playerplc[player] >= *length - 1)
+    {
+        playerplc[player] = *length - 1;
+        boardPrint(board, row, coll, playerplc, ladd, snk, length);
+        endGame(playerplc, length);
         return 0;
     }
+    boardPrint(board, row, coll, playerplc, ladd, snk, length);
     return 1;
 }
 
-void endGame(int *player1plc, int *player2plc, int *row, int *coll, int *length)
+void endGame(int playerplc[2], int *length) // check the location of each player and decide who wins
 {
-    if (*player1plc >= *length)
+    if (playerplc[0] >= *length || playerplc[1] < playerplc[0])
     {
         printf("\nplayer 1 wins!!\n");
         return;
     }
-    if (*player2plc >= *length)
+    if (playerplc[1] >= *length || playerplc[0] < playerplc[1])
     {
         printf("\nplayer 2 wins!!\n");
         return;
     }
-    if (*player1plc < *player2plc)
-    {
-        printf("\nplayer 2 wins!!\n");
-        return;
-    }
-    if (*player1plc > *player2plc)
-    {
-        printf("\nplayer 1 wins!!\n");
-        return;
-    }
-    if (*player1plc == *player2plc)
+    if (playerplc[0] == playerplc[1])
     {
         printf("it's a tie!!\n");
         return;
     }
 }
 
-int main() 
+int main()
 {
     srand(time(NULL));
     int **board;
-    int row, coll, player1plc = 0, player2plc = 0, ladder[6] = {0}, snake[6] = {0}, choice, game = 1, len;
-    printf("\nWelcome to the game of Snakes_and_Ladders.\n in this version you choose the size of your board\n and where to place the snakes and the ladders\n in this game there are 3 ladders and 3 snakes\n follow the instraction and enjoy!\n\n");
+    int row, coll, playerplc[2] = {0}, ladder[6] = {0}, snake[6] = {0}, choice, game = 1, len;
+    printf("\nWelcome to the game of Snakes_and_Ladders.\n in this version you choose the size of your board\n and where to place the snakes and the ladders\n in this game there are 3 ladders and 3 snakes\n follow the instruction and enjoy!\n\n");
     boardInit(board, &row, &coll, ladder, snake, &len);
     while (game)
     {
         printf("\nchoose your option:\n 1: player 1 turn\n 2: player 2 turn\n 3: exit game\n");
         scanf("%d", &choice);
-        game = gamePlay(board, &player1plc, &player2plc, ladder, snake, &row, &coll, choice, &len);
+        if (choice == 3)//exit option (3)
+        {
+            boardPrint(board, &row, &coll, playerplc, ladder, snake, &len);
+            endGame(playerplc, &len);
+            game = 0;
+            break;
+        }
+        game = gamePlay(board, playerplc, choice - 1, ladder, snake, &row, &coll, choice, &len);
     }
     free(board);
     return 1;
